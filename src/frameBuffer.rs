@@ -8,24 +8,39 @@ pub struct Framebuffer {
     background_color: u32,
     current_color: u32,
     line_color: u32,
+    cells: Vec<bool>, // Nuevo campo para almacenar el estado de las células
+
 }
 
 impl Framebuffer {
     pub fn new(width: usize, height: usize) -> Framebuffer {
         let buffer = vec![0; width * height];
+        let cells = vec![false; width * height]; // Inicializar las células como muertas
         Framebuffer {
             width,
             height,
             buffer,
-            background_color: 0x000000, // Default background color (black)
-            current_color: 0xFFFFFF, // Default drawing color (white)
-            line_color:0xFFFFFF , // Default line color (white)
+            background_color: 0x000000, // Color de fondo predeterminado (negro)
+            current_color: 0xFFFFFF, // Color de dibujo predeterminado (blanco)
+            line_color: 0xFFFFFF, // Color de línea predeterminado (blanco)
+            cells,
         }
     }
 
     pub fn set_cell(&mut self, x: usize, y: usize, alive: bool) {
-        let color = if alive { self.current_color } else { self.background_color };
-        self.point(x, y, color);
+        if x < self.width && y < self.height {
+            self.cells[y * self.width + x] = alive;
+            let color = if alive { self.current_color } else { self.background_color };
+            self.point(x, y, color);
+        }
+    }
+
+    pub fn is_alive(&self, x: usize, y: usize) -> bool {
+        if x < self.width && y < self.height {
+            self.cells[y * self.width + x]
+        } else {
+            false
+        }
     }
 
     pub fn width(&self) -> usize {
@@ -40,11 +55,16 @@ impl Framebuffer {
         self.background_color = color;
     }
 
+    
     pub fn clear(&mut self) {
         for pixel in self.buffer.iter_mut() {
             *pixel = self.background_color;
         }
+        for cell in self.cells.iter_mut() {
+            *cell = false;
+        }
     }
+
 
     pub fn set_current_color(&mut self, color: u32) {
         self.current_color = color;
